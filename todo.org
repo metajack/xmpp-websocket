@@ -1,0 +1,8 @@
+* reference work on native arrays
+  http://blog.vlad1.com/2009/11/06/canvasarraybuffer-and-canvasarray/
+  Chris Blizzard: "Note that we're working on adding interfaces to
+  expose this from XHR, Vlad has expressed interest in doing the same
+  to the WebSocket DOM interfaces and we're working on one from the
+  File API as well. Basically anywhere where the browser is expected
+  to handle a big pile of binary data, we should probably be exposing
+  interfaces to expose them as native arrays."

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="us-ascii"?>
+<!DOCTYPE rfc SYSTEM "rfc2629.dtd">
+
+<?rfc toc="yes"?>
+<?rfc rfcprocack="yes"?>
+<?rfc sortrefs="yes"?>
+<?rfc symrefs="yes"?>
+<?rfc linkmailto="yes"?>
+<?rfc strict="yes"?>
+
+<rfc docName="draft-moffitt-xmpp-over-websocket-00"
+     category="std" ipr="trust200902">
+  <front>
+    <title abbrev="XMPP over WebSocket">
+      XMPP over WebSocket Transport
+    </title>
+    
+    <author initials="J." surname="Moffitt" fullname="Jack Moffitt"
+            role="editor">
+      <organization></organization>
+      <address>
+        <email>jack@metajack.im</email>
+      </address>
+    </author>
+
+    <date day="8" month="December" year="2010"/>
+
+    <area>Applications</area>
+    <workgroup>HyBi Working Group</workgroup>
+
+    <keyword>I-D</keyword>
+    <keyword>Internet-Draft</keyword>
+    <keyword>WebSocket</keyword>
+    <keyword>XMPP</keyword>
+
+    <abstract>
+      <t>
+        This document defines a binding for the XMPP protocol over a
+        WebSocket transport layer. A WebSocket binding for XMPP
+        provides higher performance than the current HTTP binding for
+        XMPP.
+      </t>
+    </abstract>
+  </front>
+
+  <middle>
+    <section anchor="intro" title="Introduction">
+    </section>
+
+    <section anchor="security" title="Security Considerations">
+      <t>...</t>
+    </section>
+  </middle>
+
+  <back>
+  </back>
+</rfc>

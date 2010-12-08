@@ -1,0 +1,416 @@
+<?xml version="1.0" encoding="us-ascii"?>
+<!DOCTYPE rfc SYSTEM "rfc2629.dtd">
+<?rfc toc="yes"?>
+<?rfc compact="yes"?>
+<?rfc sortrefs="yes"?>
+<?rfc symrefs="yes"?>
+<?rfc linkmailto="yes"?>
+<?rfc strict="yes"?>
+<?rfc subcompact="no"?>
+<rfc category="info" ipr="trust200902"
+     docName="draft-ietf-hybi-design-space-01">
+
+  <front>
+    <title abbrev="Bidirectional Design Space">
+      Design Space for Bidirectional Protocols
+    </title>
+
+    <author initials="J." surname="Moffitt" fullname="Jack Moffitt"
+            role="editor">
+      <organization>Collecta</organization>
+      <address>
+        <email>jack@collecta.com</email>
+      </address>
+    </author>
+
+    <author initials="S." surname="Loreto" fullname="Salvatore Loreto">
+      <organization>Ericsson</organization>
+      <address>
+        <postal>
+          <street>Hirsalantie 11</street>
+          <code>02420</code> 
+          <city>Jorvas</city> 
+          <country>Finland</country>
+        </postal>
+        <email>salvatore.loreto@ericsson.com</email>
+      </address>
+    </author>
+
+    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
+      <organization>Cisco</organization>
+      <address>
+        <email>psaintan@cisco.com</email>
+      </address>
+    </author>
+
+    <author initials="S." surname="Salsano" fullname="Stefano Salsano">
+      <organization>Univ. of Rome "Tor Vergata"</organization>
+      <address>
+        <postal>
+          <street>Via del Politecnico, 1</street>
+          <code>00133</code> 
+          <city>Rome</city> 
+          <country>Italy</country>
+        </postal>
+        <email>stefano.salsano@uniroma2.it</email>
+      </address>
+    </author>
+
+    <date day="28" month="Jun" year="2010"/>
+    <area>Applications</area>
+    <keyword>I-D</keyword>
+
+    <keyword>Internet-Draft</keyword>
+
+    <abstract>
+      <t>
+      As technologies for bidirectional communication over HTTP have
+      become pervasive, interest has grown in (1) defining improved
+      mechanisms for support of existing technologies (short-term
+      solutions such as new HTTP headers) and (2) the development of
+      new bidirectional protocols (long-term solutions such as
+      WebSocket, Bidirectional Web Transfer Protocol, and Reverse
+      HTTP). In order to provide context for such work, this document
+      provides a tentative map of the design space for bidirectional
+      HTTP, with special attention to deployed infrastructure
+      (e.g. web clients, intermediaries, firewalls, NATs, web servers)
+      and programming environments.
+      </t>
+    </abstract>
+  </front>
+
+  <middle>
+    <section anchor="Intro" title="Introduction">
+      <t>
+        As technologies for bidirectional communication over HTTP have
+        become pervasive, interest has grown in (1) defining improved
+        mechanisms for support of existing technologies (short-term
+        solutions such as new HTTP headers) and (2) the development of
+        new bidirectional protocols (long-term solutions such as
+        WebSocket, Bidirectional Web Transfer Protocol, and Reverse
+        HTTP). In order to provide context for such work, this
+        document provides a tentative map of the design space for
+        bidirectional HTTP, with special attention to deployed
+        infrastructure (e.g. web clients, intermediaries, firewalls,
+        NATs, web servers) and programming environments.
+      </t>
+      <t>
+        In existing HTTP-based systems, the typical architecture is
+        client-server Representational State Transfer (REST), where
+        the resources served are closely associated with an entity
+        known by a URI or URL. However, the introduction of
+        bidirectionality can significantly change the normal HTTP
+        patterns.
+      </t>
+      <t>
+        For example, the standard roles of client and server can be
+        reversed, and a server can request resources from a client.
+        Unfortunately, due to the lack of client addressability, URLs
+        may not be applicable to client entities and new addressing
+        paradigms may be required.
+      </t>
+      <t>
+        Furthermore, bidirectionality often introduces a message passing
+        pattern into the traditional REST style.
+      </t>
+      <t>
+        These additional semantics influence the design of
+        bidirectional protocols, addressing, and APIs. Without a
+        strong association between an identified entity and a
+        resource, new mechanisms for content distribution and caching
+        messages will need to be considered.
+      </t>
+      <t>
+        In the following sections, the design space is analysed from the
+        perspective of clients, servers, and intermediaries.
+      </t>
+    </section>
+
+    <section anchor="concerns" title="Concerns and criteria">
+      <t>
+        The process of evaluating improvements to existing
+        bidirectional solutions or development of new bidirectional
+        protocols should take into consideration the following
+        concerns and criteria:
+      </t>
+      <t>
+        <list style="hanging">
+          <t hangText="Complexity:">
+            enables ease of implementation, understanding, and debugging
+          </t>
+          <t hangText="Capability:">
+            addresses a wide range of known bidirectional use-cases
+          </t>
+          <t hangText="Extensibility:">
+            has the capacity to handle new use-cases
+          </t>
+          <t hangText="Latency:">
+            minimizes latency and defines minimal, average, and maximal
+            latency for message delivery
+          </t>
+          <t hangText="Bandwidth overhead:">
+            minimizes overhead for idle and busy usage
+          </t>
+          <t hangText="Scalability:">
+            has the ability to handle large scale usage
+          </t>
+          <t hangText="Footprint:">
+            has the ability to handle small devices and/or massive
+            replication ("cloud")
+          </t>
+          <t hangText="AAA:">
+            enables proper Authentication, Authorization and Accounting
+          </t>
+          <t hangText="Security:">
+            enables strong security for integral, confidential,
+            endorsed, and cross-domain deployments
+          </t>
+          <t hangText="Interoperability:">
+            can work with and/or be integrated with existing
+            bidirectional implementations
+          </t>
+          <t hangText="Compatibility:">
+            can work with existing web infrastructure for
+            distributing, caching, manipulating, and displaying
+            content
+          </t>
+        </list>
+      </t>
+    </section>
+
+    <section anchor="server-side" title="Server side">
+      <t>
+        The server side can be decomposed into three categories:
+      </t>
+      <t>
+        <list style="hanging">
+          <t hangText="Standard HTTP">
+            In this category two scenarios are possible:
+          </t>
+          <t>
+            In the first scenario, the bidirectionality is part of the
+            normal HTTP server responsibilities. HTTP is used for
+            transport of the server events. Examples include Comet and
+            (in some deployments) BOSH.
+          </t>
+          <t>
+            In the second scenario two servers are involved.
+            Bidirectionality is not part of the normal HTTP server
+            responsibilities, and a push service is offered by a
+            separate server that may reside on a different machine
+            from the HTTP server. HTTP is used for transport of the
+            server events.
+          </t>
+          <t>
+            In the latter scenario, when a browser is used on the
+            client side, a cross-domain solution is needed to overcome
+            the same-origin policy <xref
+            target="I-D.abarth-origin"/>. Examples include BOSH (in
+            some deployments) and Lightstreamer.
+          </t>
+
+          <t hangText="In-band non-HTTP:">
+            Bidirectionality is part of the normal HTTP/Web server
+            responsibilities. However, server events are transported
+            on an upgraded HTTP connection. Examples include
+            Bidirectional Web Transfer Protocol (BWTP) and WebSockets
+            <xref target="I-D.ietf-hybi-thewebsocketprotocol"/>.
+          </t>
+
+          <t hangText="Out-of-band non-HTTP:">
+            Bidirectionality is offered by a dedicated server using
+            non HTTP protocol for transport server events. Examples
+            include WebSockets <xref
+            target="I-D.ietf-hybi-thewebsocketprotocol"/>.
+          </t>
+        </list>
+      </t>
+      <t>
+        The Standard HTTP based servers can work with existing HTTP
+        standards or an enhanced HTTP. The enhanced HTTP would be a
+        standardized set of headers and behaviours that assist
+        bidirectionality and cross-domain concerns.
+      </t>
+      <t>
+        At present, a protocol that interacts heavily with JavaScript
+        on the client side often implies some constraints on the
+        server side, such that they have to use XML or JSON
+        encapsulation or specific Unicode encodings. JavaScript
+        currently has no native ability to interact with binary data
+        as anything more than a blob.
+      </t>
+    </section>
+
+    <section anchor="client-side" title="Clients">
+      <t>
+        Clients can be involved in bidirectional transport in the
+        following capacities:
+      </t>
+      <t>
+        <list style="hanging">
+          <t hangText="In browser open standards with HTTP transport:">
+            For applications written in a web browser scripting
+            language (e.g. JavaScript) within a browser client.
+            Examples include Comet and BOSH.
+          </t>
+          <t hangText="In browser open standards with enhanced HTTP transport:">
+            For applications written in a web browser scripting
+            language (e.g. JavaScript) within a browser client.
+            Examples include Comet and BOSH with cross-domain extensions.
+          </t>
+          <t>
+            Browsers using either standard HTTP transport or enhanced
+            HTTP transport typically use XMLHttpRequest (XHR) API
+            <xref target="W3C.WD-XMLHttpRequest2-20090820"/>
+            allowing scripts to perform HTTP client functionality. The
+            XHR object can be used to perform bidirectional HTTP using
+            regular polling or long polling.
+          </t>
+          <t>
+            Some XHR implementations also support the cross-domain
+            extension <xref target="W3C.WD-cors-20090317"/>, which
+            overcomes the same-origin policy <xref
+            target="I-D.abarth-origin"/>. The same-origin policy
+            restricts an application running at one origin from
+            interacting with another origin. However, XHR and the CORS
+            extension impose some limitations on the headers that can
+            be set by client-side code.
+          </t>
+          <t>
+            An alternative to developing with XHR directly is the
+            Server-Sent Events API <xref
+            target="W3C.WD-eventsource-20090423"/>. The EventSource
+            interface enables servers to push data to Web pages over
+            HTTP or using dedicated server-push protocols.
+          </t>
+          <t hangText="In browser open standards with non HTTP transport:">
+            For applications written in JavaScript within a browser
+            client.  Examples include BWTP and WebSockets <xref
+            target="I-D.ietf-hybi-thewebsocketprotocol"/>.
+          </t>
+          <t hangText="In browser with plugin:">
+            This is not of particular interest to IETF, but should be
+            noted as part of the design space. Examples include
+            BlazeDS. Several of the other protocols have also used
+            plugins to circumvent the same-origin policy.
+          </t>
+          <t hangText="Non-browser HTTP:">
+            A bidirectional client may be written outside of a browser
+            and use bidirectional web transports. Typically this is
+            done when a rich or minimal client requires a mature
+            transport for application protocol with request-response
+            semantics or the ability to bypass restrictive
+            firewalls. Examples include the Comet Java client, the
+            Second Life Viewer, and several XMPP clients.
+          </t>
+          <t hangText="Non browser non-HTTP:">
+            These are the typical non-HTTP protocol clients like mail
+            readers and file transfer utilities.
+          </t>
+          <t>
+            Non browser clients may also interact with servers using
+            web focused protocols such as WebSocket.
+          </t>
+        </list>
+      </t>
+      <t>
+        Browser based client logic must be implemented in JavaScript
+        in general, and this currently restricts the form of data
+        which can be manipulated by the client. A binary data API for
+        JavaScript may remove this restriction in the future. [open issue].
+      </t>
+    </section>
+    
+    <section anchor="Intermediaries-side" title="Intermediaries">
+      <t>
+        Intermediaries (e.g. proxies, gateways, caching servers, load
+        balancers) can be involved in bidirectional transport in
+        several capacities:
+      </t>
+      <t>
+        <list style="hanging">
+          <t hangText="Legal HTTP relay:">
+            Transports such as long polling use intermediaries to
+            carry legal HTTP requests and responses. Any capabilities
+            that may interfere with bidirectional flow (e.g. caching)
+            are controlled with standard headers or cookies. The
+            intermediary may be a participant in the transport (e.g.
+            changing framing or encapsulation).
+          </t>
+          <t hangText="Defacto HTTP relay:">
+            Some streaming transports use the common behavior of HTTP
+            intermediaries to forward content packet-by-packet. This
+            relies on intermediaries to not cache or buffer content.
+          </t>
+          <t hangText="Enhanced HTTP relay:">
+            Uses yet-to-be-defined HTTP headers to assist HTTP based
+            bidirectional transports. The intermediary may be a
+            participant in the transport (e.g. changing framing or
+            encapsulation).
+          </t>
+          <t hangText="Upgraded HTTP relay:">
+            Uses HTTP upgrade to relay a non-HTTP protocol.
+          </t>
+          <t hangText="Tunneled relay:">
+            Uses the CONNECT mechanism to simulate an SSL connection
+            to be used as a tunnel for a non-HTTP transport.
+          </t>
+        </list>
+      </t>
+    </section>
+
+    <section title="Acknowledgments">
+      <t>
+        The bulk of this document was created by its original authors:
+        Salvatore Loreto, Peter Saint-Andre, Stefano Salsano, and Greg
+        Wilkins.
+      </t>
+    </section>
+
+    <section title="IANA Considerations" anchor="iana">
+      <t>This document does not require any actions by the IANA.</t>
+    </section>
+    
+    <section title="Security Considerations" anchor="security">
+      <t>
+        There are several security issues to consider with the types
+        of protocols mentioned:
+      </t>
+      <t>
+        Cross protocol attacks are an issue for browser based
+        clients. An attacker would attempt to initiate a connection to
+        a service by mimicking one protocol with another. For example,
+        an attacker would attempt to fake a WebSocket connection by
+        misuse of XMLHttpRequest.
+      </t>
+      <t>
+        For protocols which span multiple TCP or HTTP connections
+        (e.g. BOSH and Comet), some consideration is needed to protect
+        against data injection. Each request may come from a different
+        TCP connection or even IP address, so the server must have
+        some way to tell which requests belong to the session. This is
+        typically solved with difficult to guess sequence numbers and
+        session termination when rogue sequence numbers are used.
+      </t>
+      <t>
+        Since browser based clients are the most common, and
+        JavaScript has no facilities for binary data manipulation,
+        cryptographic security must be handled solely by the browser
+        and server. This limits the security possible with solutions
+        that expose an existing service over another protocol as the
+        client cannot ensure secure transport for anything but the
+        immediate peer.
+      </t>
+    </section>
+  </middle>
+
+  <back>
+    <references title="Informative References">
+      <?rfc include="reference.I-D.ietf-hybi-thewebsocketprotocol"?>
+      <?rfc include="reference.W3C.WD-cors-20090317"?>
+      <?rfc include="reference.W3C.WD-XMLHttpRequest2-20090820"?>
+      <?rfc include="reference.W3C.WD-eventsource-20090423"?>
+      <?rfc include="reference.I-D.abarth-origin"?>
+    </references>
+  </back>
+</rfc>
