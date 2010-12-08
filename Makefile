@@ -3,21 +3,23 @@ xmldir=/Users/jack/Sources/hybi/citations
 
 input=$(basenames:=.xml)
 
-%.txt: %.xml
-	@echo "BUILD " $@ "..."
-	@XML_LIBRARY=$(xmldir) xml2rfc $< $@
-
-%.html: %.xml
-	@echo "BUILD " $@ "..."
-	@XML_LIBRARY=$(xmldir) xml2rfc $< $@
-
-text: $(input)
-
-html: $(input)
-
-clean:
-	@rm $(basenames:.xml=.html) $(basenames:.xml=.txt)
+.PHONY: all text html clean
 
 all: text html
 
-.PHONY: all text html
+text: $(input:.xml=.txt)
+
+html: $(input:.xml=.html)
+
+%.txt: %.xml
+	@echo "BUILD" $@ "..."
+	@XML_LIBRARY=$(xmldir) xml2rfc $< $@
+
+%.html: %.xml
+	@echo "BUILD" $@ "..."
+	@XML_LIBRARY=$(xmldir) xml2rfc $< $@
+
+clean:
+	@rm -f $(basenames:=.html) $(basenames:=.txt)
+
+
