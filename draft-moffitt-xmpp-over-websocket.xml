@@ -16,7 +16,7 @@
 <?rfc linkmailto="yes"?>
 <?rfc strict="yes"?>
 
-<rfc docName="draft-moffitt-xmpp-over-websocket-00"
+<rfc docName="draft-moffitt-xmpp-over-websocket-01"
      category="std" ipr="trust200902">
   <front>
     <title abbrev="XMPP over WebSocket">
@@ -154,14 +154,18 @@
           or an XML text declaration followed by an opening stream
           tag.
         </t>
+        <t>
+          Except in the case of certain stream errors (see <xref
+          target="errors"/>), the opening stream tag,
+          &lt;stream:stream>, MUST appear in a message by itself.
+        </t>
       </section>
 
       <section title="Stream Errors" anchor="errors">
         <t>
           Stream level errors in XMPP are terminal. Should such an
           error occur, the server MUST send the stream error as a
-          complete element in a message to the client. This message
-          MAY include the closing stream tag if a stream is opened.
+          complete element in a message to the client.
         </t>
         <t>
           If the error occurs during the opening of a stream, the
@@ -186,6 +190,11 @@
           is considered closed when a matching close message is
           received (see Section 1.4 of <xref
           target="I-D.ietf-hybi-thewebsocketprotocol"/>).
+        </t>
+        <t>
+          Except in the case of certain stream errors (see <xref
+          target="errors"/>), the closing stream tag,
+          &lt;/stream:stream>, MUST appear in a message by itself.
         </t>
       </section>
 
