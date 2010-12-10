@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="us-ascii"?>
-<!DOCTYPE rfc SYSTEM "rfc2629.dtd">
+<!DOCTYPE rfc SYSTEM "rfc2629.dtd" [
+  <!ENTITY rfc3920 PUBLIC "" "http://xml.resource.org/public/rfc/bibxml/reference.RFC.3920.xml">
+  <!ENTITY rfc3921 PUBLIC "" "http://xml.resource.org/public/rfc/bibxml/reference.RFC.3921.xml">
+  <!ENTITY xep0124 PUBLIC "" "http://xmpp.org/extensions/refs/reference.XSF.XEP-0124.xml">
+  <!ENTITY xep0199 PUBLIC "" "http://xmpp.org/extensions/refs/reference.XSF.XEP-0199.xml">
+  <!ENTITY xep0206 PUBLIC "" "http://xmpp.org/extensions/refs/reference.XSF.XEP-0206.xml">
+  <!ENTITY websocket PUBLIC "" "http://xml.resource.org/public/rfc/bibxml3/reference.I-D.draft-ietf-hybi-thewebsocketprotocol-03.xml">
+  <!ENTITY xml PUBLIC "" "http://xml.resource.org/public/rfc/bibxml4/reference.W3C.REC-xml-20081126.xml">
+]>
 
 <?rfc toc="yes"?>
 <?rfc rfcprocack="yes"?>
@@ -12,7 +20,7 @@
      category="std" ipr="trust200902">
   <front>
     <title abbrev="XMPP over WebSocket">
-      XMPP over WebSocket Transport
+      An XMPP Sub-protocol for WebSocket
     </title>
     
     <author initials="J." surname="Moffitt" fullname="Jack Moffitt"
@@ -20,6 +28,13 @@
       <organization></organization>
       <address>
         <email>jack@metajack.im</email>
+      </address>
+    </author>
+
+    <author initials="E." surname="Cestari" fullname="Eric Cestari">
+      <organization>ProcessOne</organization>
+      <address>
+        <email>ecestari@process-one.com</email>
       </address>
     </author>
 
@@ -45,13 +60,220 @@
 
   <middle>
     <section anchor="intro" title="Introduction">
+      <t>
+        Applications using XMPP (see <xref target="RFC3920"/> and
+        <xref target="RFC3921"/>) on the Web currently make use of
+        BOSH (see <xref target="XEP-0124"/> and <xref
+        target="XEP-0206"/>), an XMPP binding to HTTP. BOSH is based
+        on the HTTP long polling technique, and it suffers from high
+        transport overhead compared to XMPP's native binding to TCP.
+      </t>
+      <t>
+        It would be much better in most circumstances to avoid
+        tunneling XMPP over HTTP long polled connections and instead
+        use the XMPP protocol directly. However, the APIs and sandbox
+        that browsers have provided do not allow this. The WebSocket
+        protocol <xref target="I-D.ietf-hybi-thewebsocketprotocol"/>
+        now exists to solve these kinds of problems. The WebSocket
+        protocol is a bi-directional protocol that provides a simple
+        message-based framing layer over raw sockets and allows for more
+        robust and efficient communication in web applications.
+      </t>
+      <t>
+        This document defines a binding of the XMPP protocol over the
+        WebSocket protocol transport. It makes using XMPP within web
+        applications simpler and more efficient.
+      </t>
+    </section>
+
+    <section title="Terminology">
+      <t>
+        The basic unit of framing in the WebSocket protocol is called
+        a message. In XMPP, the basic unit is the stanza, which is a
+        subset of the first-level children of each document in an XMPP
+        stream (see Section 9 of <xref target="RFC3920"/>). XMPP also
+        has a concept of messages, which are stanzas whose top-level
+        element name is message. In this document, the word "message"
+        will mean a WebSocket message, not an XMPP message stanza (see
+        <xref target="messages"/>).
+      </t>
+    </section>
+
+    <section title="XMPP Sub-Protocol">
+      <section title="Handshake">
+        <t>
+          The xmpp sub-protocol is used to transport XMPP over a
+          WebSocket connection. The client and server agree to this
+          protocol during the WebSocket handshake (see Section 1.3 of
+          <xref target="I-D.ietf-hybi-thewebsocketprotocol"/>).
+        </t>
+        <t>
+          During the WebSocket handshake, the client MUST include the
+          |Sec-WebSocket-Protocol| header in its handshake, and the
+          value |xmpp| must be included in the list of protocols. The
+          reply from the server MUST also contain |xmpp| in its own
+          |Sec-WebSocket-Protocol| header in order for an XMPP
+          sub-protocol connection to be established.
+        </t>
+        <t>
+          Once the handshake is complete, WebSocket messages sent or
+          received will conform to the protocol defined in the rest of
+          this document.
+        </t>
+      </section>
+
+      <section title="Messages" anchor="messages">
+        <t>
+          Data frame messages in the XMPP sub-protocol MUST be of the
+          text type and contain UTF-8 encoded data. The close control
+          frame's contents are specified in <xref
+          target="closing"/>. Control frames other than close are not
+          restricted.
+        </t>
+        <t>
+          Unless noted in text, the word "message" will mean a
+          WebSocket message containing a text data frame.
+        </t>
+      </section>
+
+      <section title="XMPP Stream Setup" anchor="setup">
+        <t>
+          The first message sent after the handshake is complete MUST
+          be an XMPP opening stream tag as defined in XMPP <xref
+          target="RFC3920"/> or an XML text declaration (see Section
+          4.3.1 of <xref target="W3C.REC-xml-20081126"/>) followed by
+          an XMPP opening stream tag. The stream tag MUST NOT be
+          closed (i.e. the closing &lt;/stream:stream> tag should not
+          appear in the message) as it is the start of the client's
+          outgoing XML. The '&lt;' character of the tag or text
+          declaration MUST be the first character of the text payload.
+        </t>
+        <t>
+          The server MUST respond with a message containing an error
+          (see <xref target="errors"/>), its own opening stream tag,
+          or an XML text declaration followed by an opening stream
+          tag.
+        </t>
+      </section>
+
+      <section title="Stream Errors" anchor="errors">
+        <t>
+          Stream level errors in XMPP are terminal. Should such an
+          error occur, the server MUST send the stream error as a
+          complete element in a message to the client. This message
+          MAY include the closing stream tag if a stream is opened.
+        </t>
+        <t>
+          If the error occurs during the opening of a stream, the
+          stream error message MUST start with an opening stream tag
+          (see Section 4.7.1 of <xref target="RFC3920"/>) and end with
+          a closing stream tag.
+        </t>
+        <t>
+          After the stream error and closing stream tag have been
+          sent, the server MUST close the connection as in <xref
+          target="closing"/>.
+        </t>
+      </section>
+
+      <section title="Closing the Connection" anchor="closing">
+        <t>
+          Either the server or the client may close the connection at
+          any time. Before closing the connection, the closing party
+          MUST close the XMPP stream if it has been established.  To
+          initiate the close, the closing party MUST send a normal
+          WebSocket close message with an empty body. The connection
+          is considered closed when a matching close message is
+          received (see Section 1.4 of <xref
+          target="I-D.ietf-hybi-thewebsocketprotocol"/>).
+        </t>
+      </section>
+
+      <section title="Stanzas">
+        <t>
+          Each XMPP stanza MUST be sent in its own message. A stanza
+          MUST NOT be split over multiple messages. All first level
+          children of the &lt;stream:stream> element MUST be treated
+          the same as stanzas (e.g. &lt;stream:features> and
+          &lt;stream:error>).
+        </t>
+      </section>
+
+      <section title="Stream Restarts">
+        <t>
+          After successful SASL authentication, an XMPP stream must be
+          restarted. In these cases, as soon as the message is sent
+          (or received) containing the success indication, both the
+          server and client streams are implicitly closed, and new
+          streams must be opened. The client MUST open a new stream as
+          in <xref target="setup"/> and MUST NOT send a closing stream
+          tag.
+        </t>
+      </section>
+
+      <section title="Pings and Keepalives">
+        <t>
+          XMPP servers send whitespace pings as keepalives between
+          stanzas, and XMPP clients can do the same thing. These extra
+          whitespace characters are not significant in the protocol.
+          Servers and clients SHOULD use WebSocket ping messages
+          instead for this purpose.
+        </t>
+        <t>
+          The XMPP Ping extension <xref target="XEP-0199"/> allows
+          entities to send and respond to ping requests. A client
+          sending a WebSocket ping is equivalent to pinging the
+          WebSocket server, which may also be the XMPP server. When
+          the XMPP server is not also the WebSocket server, a
+          WebSocket ping may be useful to check the health of the
+          intermediary server.
+        </t>
+      </section>
+
+      <section title="TLS" anchor="tls">
+        <t>
+          TLS cannot be used in The XMPP sub-protocol because the
+          sub-protocol does not allow for raw binary data to be
+          sent. A server MUST NOT advertise TLS as a stream feature
+          (see Section 4.6 of <xref target="RFC3920"/>). A client MUST
+          ignore the TLS feature if it is advertised over WebSocket.
+        </t>
+      </section>
+    </section>
+
+    <section title="Examples">
+      <t>
+        Examples will be added as soon as the WebSocket protocol
+        specification is more stable.
+      </t>
+    </section>
+
+    <section anchor="iana" title="IANA Considerations">
+      <t>
+        If a registry is created for WebSocket sub-protocols, the xmpp
+        sub-protocol will be registered.
+      </t>
     </section>
 
     <section anchor="security" title="Security Considerations">
-      <t>...</t>
+      <t>
+        Since application level TLS cannot be used (see <xref
+        target="tls"/>), applications which need to protect the privacy
+        of the XMPP traffic need to do so a the WebSocket level or
+        some other higher level.
+      </t>
     </section>
   </middle>
 
   <back>
+    <references title="Informative References">
+      &rfc3920;
+      &rfc3921;
+      &xep0124;
+      &xep0199;
+      &xep0206;
+      &websocket;
+      &xml;
+    </references>
   </back>
 </rfc>
