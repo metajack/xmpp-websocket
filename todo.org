@@ -1,4 +1,4 @@
-* reference work on native arrays
+* DONE reference work on native arrays
   http://blog.vlad1.com/2009/11/06/canvasarraybuffer-and-canvasarray/
   Chris Blizzard: "Note that we're working on adding interfaces to
   expose this from XHR, Vlad has expressed interest in doing the same
@@ -6,3 +6,27 @@
   File API as well. Basically anywhere where the browser is expected
   to handle a big pile of binary data, we should probably be exposing
   interfaces to expose them as native arrays."
+* expand security conderations section on cross protocol attacks
+  make it a sub-section and talk about methods and solutions
+* add section in security considerations about adam's paper
+  discuss pitfalls of upgrade
+* DONE add section for discussion of port 80/443 sharing vs. not sharing
+* DONE add section on failure modes
+  ie, how intermediaries can cause failures and how the protocol must
+  deal with that.
+* DONE add references for Comet and BOSH
+  stefano said to use this for Comet:
+   <reference anchor="COMET">
+   <front>
+     <title>Comet: Low Latency Data for the Browser</title>
+     <author initials="A." surname="Russell" fullname="Alex Russell">
+       <organization/>
+       <address>
+
+         <email/>
+       </address>
+     </author>
+     <date day="3" month="March" year="2006"/>
+   </front>
+   <format type="HTML" target="http://alex.dojotoolkit.org/?p=545"/>
+ </reference>

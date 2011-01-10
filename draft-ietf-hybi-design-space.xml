@@ -17,9 +17,8 @@
 
     <author initials="J." surname="Moffitt" fullname="Jack Moffitt"
             role="editor">
-      <organization>Collecta</organization>
       <address>
-        <email>jack@collecta.com</email>
+        <email>jack@metajack.im</email>
       </address>
     </author>
 
@@ -190,8 +189,8 @@
           <t>
             In the first scenario, the bidirectionality is part of the
             normal HTTP server responsibilities. HTTP is used for
-            transport of the server events. Examples include Comet and
-            (in some deployments) BOSH.
+            transport of the server events. Examples include Comet
+            <xref target="COMET"/> and BOSH <xref targt="XEP-0124"/>.
           </t>
           <t>
             In the second scenario two servers are involved.
@@ -205,8 +204,8 @@
             In the latter scenario, when a browser is used on the
             client side, a cross-domain solution is needed to overcome
             the same-origin policy <xref
-            target="I-D.abarth-origin"/>. Examples include BOSH (in
-            some deployments) and Lightstreamer.
+            target="I-D.abarth-origin"/>. Examples include BOSH and
+            Lightstreamer.
           </t>
 
           <t hangText="In-band non-HTTP:">
@@ -236,8 +235,9 @@
         on the client side often implies some constraints on the
         server side, such that they have to use XML or JSON
         encapsulation or specific Unicode encodings. JavaScript
-        currently has no native ability to interact with binary data
-        as anything more than a blob.
+        currently has limited, but growing, ability to interact with
+        binary data as anything more than a blob (see <xref
+        target='crypto'/> for how this impacts security).
       </t>
     </section>
 
@@ -256,7 +256,8 @@
           <t hangText="In browser open standards with enhanced HTTP transport:">
             For applications written in a web browser scripting
             language (e.g. JavaScript) within a browser client.
-            Examples include Comet and BOSH with cross-domain extensions.
+            Examples include Comet and BOSH with cross-domain
+            extensions.
           </t>
           <t>
             Browsers using either standard HTTP transport or enhanced
@@ -359,6 +360,57 @@
       </t>
     </section>
 
+    <section title="Port Sharing">
+      <t>
+        Current solutions for bi-directional communication on the Web
+        typically use HTTP as a transport layer, thus using either
+        port 80 or port 443. This has the practical advantage of
+        working in nearly all environments and the disadvantages of
+        inefficiency and subverting network policies of some
+        organizations.
+      </t>
+      <t>
+        It is also possible to define a new port for future
+        bi-directional web protocols. Using a unique port would remove
+        design complexity that exists to politely share a well known
+        port, but it would also have a negative affect on adoption as
+        organizations are hestitant and slow to open new ports on
+        their firewalls.
+      </t>
+      <t>
+        Due to interactions with HTTP intermediaries, sharing port 80
+        and 443 (even politely) is not a perfect solution. It is
+        possible for an intermediary obstruct the protocol, preventing
+        connections or data in one or both directions.
+      </t>
+      <t>
+        As an example, Google's SPDY protocol team tested success
+        rates for various ports. They tried using port 80, port 443,
+        and a high numbered port, and found that using port 80 was the
+        least successful (67%) and port 443 was the most successful
+        (95%).
+    </section>
+
+    <section title="Failure Modes">
+      <t>
+        The protocol may fail in a number of ways, but it is important
+        when these failures are detected. It is desirable that
+        failures be detected as quickly as possible, especially as
+        most use cases for bi-directional protocols are sensitive to
+        latency. For example, if an unknown intermediary will cause a
+        bi-direcitonal connection to fail, it would be best to know
+        this during the connection setup rather that discover it after
+        data transmission times out.
+      </t>
+      <t>
+        Implementations of early drafts of WebSocket revealed that
+        some intermediaries would allow a connection to be established
+        but the resulting connection was unusable by
+        applications. Later drafts have attempted to remedy this by
+        moving the failure to connection setup time.
+      </t>
+    </section>
+
     <section title="Acknowledgments">
       <t>
         The bulk of this document was created by its original authors:
@@ -374,33 +426,55 @@
     <section title="Security Considerations" anchor="security">
       <t>
         There are several security issues to consider with the types
-        of protocols mentioned:
+        of protocols mentioned.
       </t>
-      <t>
-        Cross protocol attacks are an issue for browser based
-        clients. An attacker would attempt to initiate a connection to
-        a service by mimicking one protocol with another. For example,
-        an attacker would attempt to fake a WebSocket connection by
-        misuse of XMLHttpRequest.
-      </t>
-      <t>
-        For protocols which span multiple TCP or HTTP connections
-        (e.g. BOSH and Comet), some consideration is needed to protect
-        against data injection. Each request may come from a different
-        TCP connection or even IP address, so the server must have
-        some way to tell which requests belong to the session. This is
-        typically solved with difficult to guess sequence numbers and
-        session termination when rogue sequence numbers are used.
-      </t>
-      <t>
-        Since browser based clients are the most common, and
-        JavaScript has no facilities for binary data manipulation,
-        cryptographic security must be handled solely by the browser
-        and server. This limits the security possible with solutions
-        that expose an existing service over another protocol as the
-        client cannot ensure secure transport for anything but the
-        immediate peer.
-      </t>
+
+      <section title="Cross-Protocol Attacks">
+        <t>
+          Cross protocol attacks are an issue for browser based
+          clients. An attacker would attempt to initiate a connection
+          to a service by mimicking one protocol with another. For
+          example, an attacker would attempt to fake a WebSocket
+          connection by clever use of the XMLHttpRequest API.
+        </t>
+      </section>
+
+      <section title="Attacks Against Intermediaries">
+        <t>
+          TODO ref barth paper
+        </t>
+      </section>
+
+      <section title="Data Injection Attacks">
+        <t>
+          For protocols which span multiple TCP or HTTP connections
+          (e.g. BOSH and Comet), some consideration is needed to
+          protect against data injection. Each request may come from a
+          different TCP connection or even IP address, so the server
+          must have some way to tell which requests belong to the
+          session. This is typically solved with difficult to guess
+          sequence numbers and session termination when rogue sequence
+          numbers are used.
+        </t>
+      </section>
+
+      <section title="Cryptographic Issues" anchor='crypto'>
+        <t>
+          Since browser based clients are the most common, and
+          JavaScript currently has limited facilities for binary data
+          manipulation, cryptographic security will be handled solely
+          by the browser and server. This limits the security possible
+          with solutions that expose an existing service over another
+          protocol as the client cannot ensure secure transport for
+          anything but the immediate peer.
+        </t>
+        <t>
+          This situation is likely temporary. The browser vendors are
+          already working on exposing a native array object to many
+          parts of JavaScript, including file access and
+          XMLHttpRequest APIs. This work is already available in a
+          limited form for use with WebGL.
+      </section>
     </section>
   </middle>
 
@@ -411,6 +485,19 @@
       <?rfc include="reference.W3C.WD-XMLHttpRequest2-20090820"?>
       <?rfc include="reference.W3C.WD-eventsource-20090423"?>
       <?rfc include="reference.I-D.abarth-origin"?>
+
+      <reference anchor="COMET">
+        <front>
+          <title>Comet: Low Latency Data for the Browser</title>
+          <author initials="A." surname="Russell" fullname="Alex Russell">
+            <address>
+              <email/>
+            </address>
+          </author>
+          <date day="3" month="March" year="2006"/>
+        </front>
+        <format type="HTML" target="http://alex.dojotoolkit.org/?p=545"/>
+      </reference>
     </references>
   </back>
 </rfc>
