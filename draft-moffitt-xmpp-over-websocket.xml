@@ -275,7 +275,7 @@
       <t>
         Since application level TLS cannot be used (see <xref
         target="tls"/>), applications which need to protect the privacy
-        of the XMPP traffic need to do so a the WebSocket level or
+        of the XMPP traffic need to do so at the WebSocket level or
         some other higher level.
       </t>
     </section>
