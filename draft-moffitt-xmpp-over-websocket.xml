@@ -1,14 +1,5 @@
 <?xml version="1.0" encoding="us-ascii"?>
-<!DOCTYPE rfc SYSTEM "rfc2629.dtd" [
-  <!ENTITY rfc2119 PUBLIC "" "http://xml.resource.org/public/rfc/bibxml/reference.RFC.2119.xml">
-  <!ENTITY rfc6120 PUBLIC "" "http://xml.resource.org/public/rfc/bibxml/reference.RFC.6120.xml">
-  <!ENTITY rfc6121 PUBLIC "" "http://xml.resource.org/public/rfc/bibxml/reference.RFC.6121.xml">
-  <!ENTITY xep0124 PUBLIC "" "http://xmpp.org/extensions/refs/reference.XSF.XEP-0124.xml">
-  <!ENTITY xep0199 PUBLIC "" "http://xmpp.org/extensions/refs/reference.XSF.XEP-0199.xml">
-  <!ENTITY xep0206 PUBLIC "" "http://xmpp.org/extensions/refs/reference.XSF.XEP-0206.xml">
-  <!ENTITY rfc6455 PUBLIC "" "http://xml.resource.org/public/rfc/bibxml/reference.RFC.6455.xml">
-  <!ENTITY xml PUBLIC "" "http://xml.resource.org/public/rfc/bibxml4/reference.W3C.REC-xml-20081126.xml">
-]>
+<!DOCTYPE rfc SYSTEM "rfc2629.dtd">
 
 <?rfc toc="yes"?>
 <?rfc rfcprocack="yes"?>
@@ -23,9 +14,16 @@
     <title abbrev="XMPP over WebSocket">
       An XMPP Sub-protocol for WebSocket
     </title>
-    
-    <author initials="J." surname="Moffitt" fullname="Jack Moffitt"
+
+    <author initials="L." surname="Stout" fullname="Lance Stout"
             role="editor">
+      <organization>&amp;yet</organization>
+      <address>
+        <email>lance@andyet.net</email>
+      </address>
+    </author>
+   
+    <author initials="J." surname="Moffitt" fullname="Jack Moffitt">
       <organization></organization>
       <address>
         <email>jack@metajack.im</email>
@@ -62,28 +60,35 @@
   <middle>
     <section anchor="intro" title="Introduction">
       <t>
-        Applications using XMPP (see <xref target="RFC6120"/> and
-        <xref target="RFC6121"/>) on the Web currently make use of
-        BOSH (see <xref target="XEP-0124"/> and <xref
-        target="XEP-0206"/>), an XMPP binding to HTTP. BOSH is based
-        on the HTTP long polling technique, and it suffers from high
-        transport overhead compared to XMPP's native binding to TCP.
+        Applications using XMPP (see <xref target="RFC6120"/>
+        and <xref target="RFC6121"/>) on the Web currently make
+        use of BOSH (see <xref target="XEP-0124"/> and 
+        <xref target="XEP-0206"/>), an XMPP binding to HTTP. BOSH is 
+        based on the HTTP long polling technique, and it suffers from
+        high transport overhead compared to XMPP's native binding
+        to TCP. In addition, there are a number of other known
+        issues with long polling <xref target="RFC6202"/>, which have
+        an impact on BOSH-based systems.
       </t>
       <t>
         It would be much better in most circumstances to avoid
         tunneling XMPP over HTTP long polled connections and instead
         use the XMPP protocol directly. However, the APIs and sandbox
         that browsers have provided do not allow this. The WebSocket
-        protocol <xref target="RFC6455"/>
-        now exists to solve these kinds of problems. The WebSocket
-        protocol is a bi-directional protocol that provides a simple
-        message-based framing layer over raw sockets and allows for more
-        robust and efficient communication in web applications.
+        protocol <xref target="RFC6455"/> now exists to solve these
+        kinds of problems. The WebSocket protocol is a bi-directional
+        protocol that provides a simple message-based framing layer
+        over raw sockets and allows for more robust and efficient
+        communication in web applications.
       </t>
       <t>
-        This document defines a binding of the XMPP protocol over the
-        WebSocket protocol transport. It makes using XMPP within web
-        applications simpler and more efficient.
+        The WebSocket protocol enables two-way communication
+        between a client and a server, effectively emulating TCP
+        at the application layer and therefore overcoming many of
+        the problems with existing long-polling techniques for
+        bidirectional HTTP. This document defines a WebSocket
+        sub-protocol for the Extensible Messaging and Presence
+        Protocol (XMPP).
       </t>
     </section>
 
@@ -109,7 +114,7 @@
     <section title="XMPP Sub-Protocol">
       <section title="Handshake">
         <t>
-          The xmpp sub-protocol is used to transport XMPP over a
+          The XMPP sub-protocol is used to transport XMPP over a
           WebSocket connection. The client and server agree to this
           protocol during the WebSocket handshake (see Section 1.3 of
           <xref target="RFC6455"/>).
@@ -117,7 +122,7 @@
         <t>
           During the WebSocket handshake, the client MUST include the
           |Sec-WebSocket-Protocol| header in its handshake, and the
-          value |xmpp| must be included in the list of protocols. The
+          value |xmpp| MUST be included in the list of protocols. The
           reply from the server MUST also contain |xmpp| in its own
           |Sec-WebSocket-Protocol| header in order for an XMPP
           sub-protocol connection to be established.
@@ -217,13 +222,13 @@
 
       <section title="Stream Restarts">
         <t>
-          After successful SASL authentication, an XMPP stream must be
-          restarted. In these cases, as soon as the message is sent
-          (or received) containing the success indication, both the
-          server and client streams are implicitly closed, and new
-          streams must be opened. The client MUST open a new stream as
-          in <xref target="setup"/> and MUST NOT send a closing stream
-          tag.
+          After successful SASL authentication, an XMPP stream needs
+          to be restarted. In these cases, as soon as the message is
+          sent (or received) containing the success indication, both
+          the server and client streams are implicitly closed, and
+          new streams needs to be opened. The client MUST open a new
+          stream as in <xref target="setup"/> and MUST NOT send a
+          closing stream tag.
         </t>
       </section>
 
@@ -246,13 +251,28 @@
         </t>
       </section>
 
-      <section title="TLS" anchor="tls">
+      <section title="Use of TLS" anchor="tls">
         <t>
-          TLS cannot be used in The XMPP sub-protocol because the
-          sub-protocol does not allow for raw binary data to be
-          sent. A server MUST NOT advertise TLS as a stream feature
-          (see Section 4.6 of <xref target="RFC6120"/>). A client MUST
-          ignore the TLS feature if it is advertised over WebSocket.
+          TLS cannot be used at the XMPP sub-protocol layer because the
+          sub-protocol does not allow for raw binary data to be sent.
+          Instead, enabling TLS SHOULD be done at the WebSocket layer
+          using secure WebSocket connections via the |wss| URI scheme.
+          (See Section 10.6 of <xref target="RFC6455"/>).
+        </t>
+        <t>
+          Because TLS is to be provided outside of the XMPP
+          sub-protocol layer, a server MUST NOT advertise
+          TLS as a stream feature (see Section 4.6 of 
+          <xref target="RFC6120"/>), and a client MUST ignore any 
+          advertised TLS stream feature, when using the XMPP 
+          sub-protocol.
+        </t>
+      </section>
+
+      <section title="Stream Management">
+        <t>
+          Implications of, and recommendation to use, the XMPP Stream
+          Management extension <xref target="XEP-0198"/> to be added.
         </t>
       </section>
     </section>
@@ -264,33 +284,58 @@
       </t>
     </section>
 
-    <section anchor="iana" title="IANA Considerations">
-      <t>
-        If a registry is created for WebSocket sub-protocols, the xmpp
-        sub-protocol will be registered.
-      </t>
-    </section>
-
     <section anchor="security" title="Security Considerations">
       <t>
         Since application level TLS cannot be used (see <xref
         target="tls"/>), applications which need to protect the privacy
-        of the XMPP traffic need to do so at the WebSocket level or
-        some other higher level.
+        of the XMPP traffic need to do so at the WebSocket or other
+        appropriate layer.
+      </t>
+      <t>
+        The Security Considerations for both WebSocket (See Section 
+        10 of <xref target="RFC6455"/> and XMPP (See Section 13 of 
+        <xref target="RFC6120"/>) apply to the WebSocket XMPP 
+        sub-protocol.
+      </t>
+    </section>
+
+    <section anchor="iana" title="IANA Considerations">
+      <t>
+        This specification requests IANA to register the WebSocket XMPP
+        sub-protocol under the "WebSocket Subprotocol Name" Registry
+        with the following data:
+        <list style="hanging">
+          <t hangText="Subprotocol Identifier:">
+            xmpp
+          </t>
+          <t hangText="Subprotocol Common Name:">
+            WebSocket Transport for the Extensible Messaging and
+            Presence Protocol (XMPP)
+          </t>
+          <t hangText="Subprotocol Definition:">
+            RFC XXXX
+          </t>
+        </list>
+      </t>
+      <t>
+        [[NOTE TO RFC EDITOR: Please change XXXX to the number assigned
+        to this document upon publication.]]
       </t>
     </section>
   </middle>
 
   <back>
     <references title="Informative References">
-      &rfc2119;
-      &rfc6120;
-      &rfc6121;
-      &rfc6455;
-      &xep0124;
-      &xep0199;
-      &xep0206;
-      &xml;
+      <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.2119.xml"?>
+      <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.6120.xml"?>
+      <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.6121.xml"?>
+      <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.6202.xml"?>
+      <?rfc include="http://xml.resource.org/public/rfc/bibxml/reference.RFC.6455.xml"?>
+      <?rfc include="http://xml.resource.org/public/rfc/bibxml4/reference.W3C.REC-xml-20081126.xml"?>
+      <?rfc include="http://xmpp.org/extensions/refs/reference.XSF.XEP-0124.xml"?>
+      <?rfc include="http://xmpp.org/extensions/refs/reference.XSF.XEP-0199.xml"?>
+      <?rfc include="http://xmpp.org/extensions/refs/reference.XSF.XEP-0206.xml"?>
+      <?rfc include="http://xmpp.org/extensions/refs/reference.XSF.XEP-0198.xml"?>
     </references>
   </back>
 </rfc>
