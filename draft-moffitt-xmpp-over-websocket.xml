@@ -8,7 +8,7 @@
 <?rfc linkmailto="yes"?>
 <?rfc strict="yes"?>
 
-<rfc docName="draft-moffitt-xmpp-over-websocket-01"
+<rfc docName="draft-moffitt-xmpp-over-websocket-02"
      category="std" ipr="trust200902">
   <front>
     <title abbrev="XMPP over WebSocket">
