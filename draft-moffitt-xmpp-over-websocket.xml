@@ -367,7 +367,7 @@ C:  <stream:stream xmlns:stream="http://etherx.jabber.org/streams"
     <section title="Discovering Connection Method">
       <t>
         The XMPP extension Discovering Alternate XMPP Connection Methods
-        <xref target="XEP-0156"/> provides a mechansim to discover
+        <xref target="XEP-0156"/> provides a mechanism to discover
         the additional information needed to connect to an XMPP server
         outside of the procedure defined in in Section 3 of 
         <xref target="RFC6120"/>.
