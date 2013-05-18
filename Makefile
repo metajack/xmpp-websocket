@@ -16,7 +16,7 @@ html: $(input:.xml=.html)
 
 %.html: %.xml
 	@echo "BUILD" $@ "..."
-	@xml2rfc $< $@
+	@xml2rfc --html $< $@
 
 clean:
 	@rm -f $(basenames:=.html) $(basenames:=.txt)
