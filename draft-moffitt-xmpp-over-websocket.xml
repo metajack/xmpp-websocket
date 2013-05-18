@@ -8,7 +8,7 @@
 <?rfc linkmailto="yes"?>
 <?rfc strict="yes"?>
 
-<rfc docName="draft-moffitt-xmpp-over-websocket-02"
+<rfc docName="draft-moffitt-xmpp-over-websocket-03"
      category="std" ipr="trust200902">
   <front>
     <title abbrev="XMPP over WebSocket">
@@ -37,7 +37,7 @@
       </address>
     </author>
 
-    <date day="25" month="February" year="2013"/>
+    <date day="18" month="May" year="2013"/>
 
     <area>Applications</area>
     <workgroup>HyBi Working Group</workgroup>
@@ -132,19 +132,48 @@
           received will conform to the protocol defined in the rest of
           this document.
         </t>
+        <t>
+          <figure>
+            <artwork><![CDATA[
+C:  GET /xmpp-websocket HTTP/1.1
+    Host: example.com
+    Upgrade: websocket
+    Connection: Upgrade
+    Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==
+    Origin: http://example.com
+    ...
+    Sec-WebSocket-Protocol: xmpp
+    Sec-WebSocket-Version: 13
+
+
+S:  HTTP/1.1 101 Switching Protocols
+    Upgrade: websocket
+    Connection: Upgrade
+    ...
+    Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
+    Sec-WebSocket-Protocol: xmpp
+
+[WebSocket connection established]
+
+C:  <stream:stream xmlns:stream="http://etherx.jabber.org/streams"
+                   xmlns="jabber:client"
+                   to="example.com"
+                   version="1.0">
+]]></artwork>
+          </figure>
+        </t>
       </section>
 
       <section title="Messages" anchor="messages">
         <t>
           Data frame messages in the XMPP sub-protocol MUST be of the
           text type and contain UTF-8 encoded data. The close control
-          frame's contents are specified in <xref
-          target="closing"/>. Control frames other than close are not
-          restricted.
+          frame's contents are specified in <xref target="closing"/>. 
+          Control frames other than close are not restricted.
         </t>
         <t>
           Unless noted in text, the word "message" will mean a
-          WebSocket message containing a text data frame.
+          WebSocket message composed of text data frames.
         </t>
       </section>
 
@@ -167,8 +196,8 @@
           tag.
         </t>
         <t>
-          Except in the case of certain stream errors (see <xref
-          target="errors"/>), the opening stream tag,
+          Except in the case of certain stream errors (see 
+          <xref target="errors"/>), the opening stream tag,
           &lt;stream:stream>, MUST appear in a message by itself.
         </t>
       </section>
@@ -187,27 +216,65 @@
         </t>
         <t>
           After the stream error and closing stream tag have been
-          sent, the server MUST close the connection as in <xref
-          target="closing"/>.
+          sent, the server MUST close the connection as in 
+          <xref target="closing"/>.
         </t>
       </section>
 
       <section title="Closing the Connection" anchor="closing">
         <t>
-          Either the server or the client may close the connection at
-          any time. Before closing the connection, the closing party
-          MUST close the XMPP stream if it has been established.  To
-          initiate the close, the closing party MUST send a normal
-          WebSocket close message with an empty body. The connection
-          is considered closed when a matching close message is
-          received (see Section 1.4 of <xref
-          target="RFC6455"/>).
+          Either the server or the client may close the connection at any
+          time. Before closing the connection, the closing party SHOULD
+          close the XMPP stream, if it has been established, by sending a
+          message with the closing &lt;/stream:stream> tag. The XMPP
+          stream is considered closed when a corresponding &lt;/stream:stream>
+          tag is received from the other party.
         </t>
         <t>
-          Except in the case of certain stream errors (see <xref
-          target="errors"/>), the closing stream tag,
+          If a client closes the WebSocket connection without closing the
+          XMPP stream after having enabled stream management (see 
+          <xref target="sm"/>), the server SHOULD keep the XMPP session alive 
+          for a period of time based on server policy, as specified in 
+          <xref target="XEP-0198"/>.
+        </t>
+        <t>
+          To initiate closing the WebSocket connection, the closing 
+          party MUST send a normal WebSocket close message with 
+          an empty body. The connection is considered closed when a 
+          matching close message is received (see Section 1.4 of 
+          <xref target="RFC6455"/>).
+        </t>
+        <t>
+          Except in the case of certain stream errors (see 
+          <xref target="errors"/>), the closing stream tag,
           &lt;/stream:stream>, MUST appear in a message by itself.
         </t>
+        <figure>
+          <preamble>
+            An example of ending an XMPP over WebSocket session by first
+            closing the XMPP stream layer and then the WebSocket connection
+            layer:
+          </preamble>
+          <artwork><![CDATA[
+Client           (XMPP WSS)            Server
+|  |                                     |  |
+|  | </stream:stream>                    |  |
+|  |------------------------------------>|  |
+|  |                    </stream:stream> |  |
+|  |<------------------------------------|  |
+|  |                                     |  |
+|  |        (XMPP Stream Closed)         |  |
+|  +-------------------------------------+  |
+|                                           |
+| WS CLOSE FRAME                            |
+|------------------------------------------>|
+|                            WS CLOSE FRAME |
+|<------------------------------------------|
+|                                           |
+|            (Connection Closed)            |
++-------------------------------------------+
+]]></artwork>
+        </figure>
       </section>
 
       <section title="Stanzas">
@@ -226,28 +293,40 @@
           to be restarted. In these cases, as soon as the message is
           sent (or received) containing the success indication, both
           the server and client streams are implicitly closed, and
-          new streams needs to be opened. The client MUST open a new
+          new streams need to be opened. The client MUST open a new
           stream as in <xref target="setup"/> and MUST NOT send a
           closing stream tag.
         </t>
+        <figure>
+          <artwork><![CDATA[
+S:  <success xmlns="urn:ietf:params:xml:ns:xmpp-sasl" />
+
+[Streams implicitly closed]
+
+C:  <stream:stream xmlns:stream="http://etherx.jabber.org/streams"
+                   xmlns="jabber:client"
+                   to="example.com"
+                   version="1.0">
+]]></artwork></figure>
       </section>
 
       <section title="Pings and Keepalives">
         <t>
           XMPP servers send whitespace pings as keepalives between
-          stanzas, and XMPP clients can do the same thing. These extra
+          stanzas, and XMPP clients can do the same as these extra
           whitespace characters are not significant in the protocol.
-          Servers and clients SHOULD use WebSocket ping messages
-          instead for this purpose.
+          Servers and clients SHOULD use WebSocket ping control
+          frames instead for this purpose.
         </t>
         <t>
-          The XMPP Ping extension <xref target="XEP-0199"/> allows
-          entities to send and respond to ping requests. A client
-          sending a WebSocket ping is equivalent to pinging the
-          WebSocket server, which may also be the XMPP server. When
-          the XMPP server is not also the WebSocket server, a
-          WebSocket ping may be useful to check the health of the
-          intermediary server.
+          In some cases, the WebSocket connection might be served by
+          an intermediary connection manager and not the XMPP server.
+          In these situations, the use of WebSocket ping messages are
+          insufficient to test that the XMPP stream is still alive.
+          Both the XMPP Ping extension <xref target="XEP-0199"/> and
+          the XMPP Stream Management extension <xref target="XEP-0198"/>
+          provide mechanisms to ping the XMPP server, and the use of
+          either extension (or both) is RECOMMENDED.
         </t>
       </section>
 
@@ -269,19 +348,51 @@
         </t>
       </section>
 
-      <section title="Stream Management">
+      <section title="Stream Management" anchor="sm">
         <t>
-          Implications of, and recommendation to use, the XMPP Stream
-          Management extension <xref target="XEP-0198"/> to be added.
+          In order to alleviate the problems of temporary disconnections
+          it is RECOMMENDED to use the XMPP Stream Management extension 
+          <xref target="XEP-0198"/> to confirm when stanzas have been
+          received by the server.
+        </t>
+        <t>
+          In particular, the use of session resumption in 
+          <xref target="XEP-0198"/> is RECOMMENDED to allow for recreating
+          the same stream session state after a temporary network
+          unavailability or after navigating to a new URL in a browser.
         </t>
       </section>
     </section>
 
-    <section title="Examples">
+    <section title="Discovering Connection Method">
       <t>
-        Examples will be added as soon as the WebSocket protocol
-        specification is more stable.
+        The XMPP extension Discovering Alternate XMPP Connection Methods
+        <xref target="XEP-0156"/> provides a mechansim to discover
+        the additional information needed to connect to an XMPP server
+        outside of the procedure defined in in Section 3 of 
+        <xref target="RFC6120"/>.
       </t>
+      <t>
+        For the XMPP over Websocket connection type, the connection
+        method name "_xmpp-client-websocket" is used to specify a
+        URI for the server's WebSocket connection endpoint.
+      </t>
+      <figure>
+        <preamble>
+          An example entry advertising that the URI "wss://example.com/xmpp"
+          is an XMPP over WebSocket endpoint, using a DNS TXT record
+          as specified in <xref target="XEP-0156"/>:
+        </preamble>
+        <artwork><![CDATA[
+  _xmppconnect IN TXT "_xmpp-client-websocket=wss://example.com/xmpp"
+]]></artwork>
+     </figure>
+     <t>
+       Implementation Note: A server is able to expose both BOSH <xref
+       target="XEP-0206"/> and WebSocket endpoints over the registered port
+       5280, using the URI path and connection upgrade headers to determine
+       which transport to serve.
+     </t>
     </section>
 
     <section anchor="security" title="Security Considerations">
@@ -334,6 +445,7 @@
       <?rfc include="http://xml.resource.org/public/rfc/bibxml4/reference.W3C.REC-xml-20081126.xml"?>
       <?rfc include="http://xmpp.org/extensions/refs/reference.XSF.XEP-0124.xml"?>
       <?rfc include="http://xmpp.org/extensions/refs/reference.XSF.XEP-0199.xml"?>
+      <?rfc include="http://xmpp.org/extensions/refs/reference.XSF.XEP-0156.xml"?>
       <?rfc include="http://xmpp.org/extensions/refs/reference.XSF.XEP-0206.xml"?>
       <?rfc include="http://xmpp.org/extensions/refs/reference.XSF.XEP-0198.xml"?>
     </references>
