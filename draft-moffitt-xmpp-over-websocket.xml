@@ -325,8 +325,8 @@ C:  <stream:stream xmlns:stream="http://etherx.jabber.org/streams"
           insufficient to test that the XMPP stream is still alive.
           Both the XMPP Ping extension <xref target="XEP-0199"/> and
           the XMPP Stream Management extension <xref target="XEP-0198"/>
-          provide mechanisms to ping the XMPP server, and the use of
-          either extension (or both) is RECOMMENDED.
+          provide mechanisms to ping the XMPP server, and either extension 
+          (or both) MAY be used to determine the state of the connection.
         </t>
       </section>
 
@@ -350,14 +350,13 @@ C:  <stream:stream xmlns:stream="http://etherx.jabber.org/streams"
 
       <section title="Stream Management" anchor="sm">
         <t>
-          In order to alleviate the problems of temporary disconnections
-          it is RECOMMENDED to use the XMPP Stream Management extension 
-          <xref target="XEP-0198"/> to confirm when stanzas have been
-          received by the server.
+          In order to alleviate the problems of temporary disconnections,
+          the XMPP Stream Management extension <xref target="XEP-0198"/> 
+          MAY be used to confirm when stanzas have been received by the server.
         </t>
         <t>
           In particular, the use of session resumption in 
-          <xref target="XEP-0198"/> is RECOMMENDED to allow for recreating
+          <xref target="XEP-0198"/> MAY be used to allow for recreating
           the same stream session state after a temporary network
           unavailability or after navigating to a new URL in a browser.
         </t>
